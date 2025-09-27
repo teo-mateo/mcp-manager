@@ -3,19 +3,23 @@
 // Purpose: Expose safe APIs to renderer process with context isolation
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { ClaudeConfig, IPC_CHANNELS } from '../shared/types';
+import { ClaudeConfig, FileState, IPC_CHANNELS } from '../shared/types';
 
 export interface ElectronAPI {
-  readClaudeConfig: () => Promise<ClaudeConfig>;
+  readClaudeConfig: () => Promise<FileState>;
   // eslint-disable-next-line no-unused-vars
-  writeClaudeConfig: (config: ClaudeConfig) => Promise<boolean>;
+  writeClaudeConfig: (config: ClaudeConfig, lastModified: Date) => Promise<void>;
   getClaudeConfigPath: () => Promise<string>;
+  // eslint-disable-next-line no-unused-vars
+  checkConfigModified: (lastModified: Date) => Promise<boolean>;
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
   readClaudeConfig: () => ipcRenderer.invoke(IPC_CHANNELS.READ_CLAUDE_CONFIG),
-  writeClaudeConfig: (config: ClaudeConfig) =>
-    ipcRenderer.invoke(IPC_CHANNELS.WRITE_CLAUDE_CONFIG, config),
+  writeClaudeConfig: (config: ClaudeConfig, lastModified: Date) =>
+    ipcRenderer.invoke(IPC_CHANNELS.WRITE_CLAUDE_CONFIG, config, lastModified),
   getClaudeConfigPath: () =>
     ipcRenderer.invoke(IPC_CHANNELS.GET_CLAUDE_CONFIG_PATH),
+  checkConfigModified: (lastModified: Date) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CHECK_CONFIG_MODIFIED, lastModified),
 } as ElectronAPI);

@@ -4,9 +4,8 @@
 
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
-import * as os from 'os';
-import * as fs from 'fs/promises';
-import { ClaudeConfig, IPC_CHANNELS } from '../shared/types';
+import { ClaudeConfig, FileState, IPC_CHANNELS } from '../shared/types';
+import { ConfigFileManager } from './services/ConfigFileManager';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -35,58 +34,46 @@ async function createWindow(): Promise<void> {
   });
 }
 
-function getClaudeConfigPath(): string {
-  const homeDir = os.homedir();
-  return path.join(homeDir, '.claude.json');
-}
-
-async function readClaudeConfig(): Promise<ClaudeConfig> {
-  try {
-    const configPath = getClaudeConfigPath();
-    const configData = await fs.readFile(configPath, 'utf-8');
-    return JSON.parse(configData);
-  } catch (error) {
-    console.error('Error reading Claude config:', error);
-    return {};
-  }
-}
-
-async function writeClaudeConfig(config: ClaudeConfig): Promise<boolean> {
-  try {
-    const configPath = getClaudeConfigPath();
-
-    // Create backup
-    try {
-      const backupPath = configPath + '.backup';
-      await fs.copyFile(configPath, backupPath);
-    } catch (backupError) {
-      console.warn('Could not create backup:', backupError);
-    }
-
-    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.error('Error writing Claude config:', error);
-    return false;
-  }
-}
+const configManager = new ConfigFileManager();
 
 // Set up IPC handlers
 function setupIpcHandlers(): void {
-  ipcMain.handle(IPC_CHANNELS.READ_CLAUDE_CONFIG, async () => {
-    return await readClaudeConfig();
+  ipcMain.handle(IPC_CHANNELS.READ_CLAUDE_CONFIG, async (): Promise<FileState> => {
+    try {
+      return await configManager.readConfig();
+    } catch (error) {
+      console.error('Error reading Claude config:', error);
+      throw error;
+    }
   });
 
   ipcMain.handle(
     IPC_CHANNELS.WRITE_CLAUDE_CONFIG,
-    async (_, config: ClaudeConfig) => {
-      return await writeClaudeConfig(config);
+    async (_, config: ClaudeConfig, lastModified: Date): Promise<void> => {
+      try {
+        await configManager.writeConfig(config, lastModified);
+      } catch (error) {
+        console.error('Error writing Claude config:', error);
+        throw error;
+      }
     }
   );
 
-  ipcMain.handle(IPC_CHANNELS.GET_CLAUDE_CONFIG_PATH, () => {
-    return getClaudeConfigPath();
+  ipcMain.handle(IPC_CHANNELS.GET_CLAUDE_CONFIG_PATH, (): string => {
+    return configManager.getFilePath();
   });
+
+  ipcMain.handle(
+    IPC_CHANNELS.CHECK_CONFIG_MODIFIED,
+    async (_, lastModified: Date): Promise<boolean> => {
+      try {
+        return await configManager.checkForModifications(lastModified);
+      } catch (error) {
+        console.error('Error checking config modifications:', error);
+        throw error;
+      }
+    }
+  );
 }
 
 app.whenReady().then(async () => {

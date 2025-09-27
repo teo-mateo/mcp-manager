@@ -5,8 +5,8 @@ Build a cross-platform Electron application for Linux & Windows to manage MCP se
 
 ## Complete Task List
 
-### TASK 1: Project Setup & Infrastructure
-**File: TASK1_Project_Setup.md**
+### ✅ COMPLETED TASK 1: Project Setup & Infrastructure
+**File: COMPLETED_TASK1_Project_Setup.md**
 - Initialize Electron project with TypeScript
 - Configure build system for Linux/Windows
 - Set up development environment with hot-reload
@@ -24,8 +24,8 @@ Build a cross-platform Electron application for Linux & Windows to manage MCP se
 - Add basic navigation between screens
 - Implement basic styling (single theme)
 
-### TASK 3: File Operations
-**File: TASK3_File_Operations.md**
+### ✅ COMPLETED TASK 3: File Operations
+**File: COMPLETED_TASK3_File_Operations.md**
 - Implement ~/.claude.json reading
 - Implement safe JSON writing with backup
 - Add file modification timestamp checking
