@@ -5,25 +5,26 @@
 import React, { useState } from 'react';
 import TextArea from '../components/common/TextArea';
 import Button from '../components/common/Button';
-import { ServerData } from '../components/server/ServerCard';
+import { useConfigScope } from '../hooks/useConfigScope';
+import { McpServer } from '../../shared/types';
 
 interface AddServerJSONScreenProps {
-  onSave: (serverData: ServerData) => void;
+  onSave: () => void;
   onCancel: () => void;
-  onSwitchToForm: () => void;
   className?: string;
 }
 
 const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
   onSave,
   onCancel,
-  onSwitchToForm,
   className = '',
 }) => {
+  const { addServer } = useConfigScope('project');
   const [jsonContent, setJsonContent] = useState('{\n  "command": "",\n  "args": [],\n  "env": {}\n}');
   const [jsonError, setJsonError] = useState('');
   const [serverName, setServerName] = useState('');
   const [nameError, setNameError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateAndFormatJSON = () => {
     try {
@@ -38,7 +39,7 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let isValid = true;
 
     // Validate server name
@@ -47,6 +48,9 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
       isValid = false;
     } else if (serverName.length > 50) {
       setNameError('Server name must be 50 characters or less');
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(serverName.trim())) {
+      setNameError('Server name can only contain letters, numbers, hyphens, and underscores');
       isValid = false;
     } else {
       setNameError('');
@@ -58,26 +62,29 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
     }
 
     if (isValid) {
+      setIsSubmitting(true);
       try {
         const serverConfig = JSON.parse(jsonContent);
 
         // Validate required fields
         if (!serverConfig.command) {
           setJsonError('Command field is required in JSON');
+          setIsSubmitting(false);
           return;
         }
 
-        const serverData: ServerData = {
-          name: serverName.trim(),
+        const mcpServer: McpServer = {
           command: serverConfig.command,
           args: serverConfig.args || [],
           env: serverConfig.env || {},
-          enabled: true,
+          type: serverConfig.type // Optional type field
         };
 
-        onSave(serverData);
+        await addServer(serverName.trim(), mcpServer);
+        onSave(); // Notify parent to navigate back
       } catch (error) {
-        setJsonError(`Error parsing server configuration: ${(error as Error).message}`);
+        setJsonError(`Error saving server: ${(error as Error).message}`);
+        setIsSubmitting(false);
       }
     }
   };
@@ -92,38 +99,19 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
           'SEARXNG_URL': 'http://localhost:8888'
         }
       }
-    },
-    {
-      name: 'VastAI Server',
-      config: {
-        command: 'node',
-        args: ['/path/to/vastai/index.js'],
-        env: {
-          'NODE_ENV': 'production'
-        }
-      }
     }
   ];
 
-  const loadExample = (config: any) => {
+  const loadExample = (config: unknown) => {
     setJsonContent(JSON.stringify(config, null, 2));
     setJsonError('');
   };
 
   return (
     <div className={className}>
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Add Server (JSON Mode)</h1>
-          <p className="text-gray-600 mt-1">Configure a new MCP server using JSON</p>
-        </div>
-        <Button
-          variant="secondary"
-          onClick={onSwitchToForm}
-          className="px-4 py-2"
-        >
-          Switch to Form Mode
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Add Server</h1>
+        <p className="text-gray-600 mt-1">Configure a new MCP server using JSON</p>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -175,23 +163,19 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
           </div>
 
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Example Configurations</h3>
-            <div className="space-y-4">
-              {exampleConfigs.map((example, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-2">{example.name}</h4>
-                  <pre className="text-xs bg-gray-50 p-3 rounded border overflow-x-auto">
-                    {JSON.stringify(example.config, null, 2)}
-                  </pre>
-                  <Button
-                    variant="secondary"
-                    onClick={() => loadExample(example.config)}
-                    className="mt-2 text-sm px-3 py-1"
-                  >
-                    Load Example
-                  </Button>
-                </div>
-              ))}
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Example Configuration</h3>
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">{exampleConfigs[0].name}</h4>
+              <pre className="text-xs bg-gray-50 p-3 rounded border overflow-x-auto">
+                {JSON.stringify(exampleConfigs[0].config, null, 2)}
+              </pre>
+              <Button
+                variant="secondary"
+                onClick={() => loadExample(exampleConfigs[0].config)}
+                className="mt-2 text-sm px-3 py-1"
+              >
+                Load Example
+              </Button>
             </div>
           </div>
         </div>
@@ -207,9 +191,10 @@ const AddServerJSONScreen: React.FC<AddServerJSONScreenProps> = ({
           <Button
             variant="primary"
             onClick={handleSave}
+            disabled={isSubmitting}
             className="px-4 py-2"
           >
-            Add Server
+            {isSubmitting ? 'Adding Server...' : 'Add Server'}
           </Button>
         </div>
       </div>

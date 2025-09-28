@@ -5,6 +5,7 @@
 import React from 'react';
 import ServerCard, { ServerData } from './ServerCard';
 import Button from '../common/Button';
+import { TestResult, TestStatus } from '../../../shared/mcpTypes';
 
 interface ServerListProps {
   servers: ServerData[];
@@ -12,6 +13,10 @@ interface ServerListProps {
   onToggle: (serverName: string) => void;
   onDelete: (serverName: string) => void;
   onAddServer: () => void;
+  onTest: (serverName: string) => void;
+  onShowTestResults: (serverName: string) => void;
+  testStatuses: Map<string, TestStatus>;
+  testResults: Map<string, TestResult>;
   className?: string;
 }
 
@@ -21,6 +26,10 @@ const ServerList: React.FC<ServerListProps> = ({
   onToggle,
   onDelete,
   onAddServer,
+  onTest,
+  onShowTestResults,
+  testStatuses,
+  testResults,
   className = '',
 }) => {
   const activeServers = servers.filter(server => server.enabled);
@@ -72,6 +81,10 @@ const ServerList: React.FC<ServerListProps> = ({
                     onEdit={onEdit}
                     onToggle={onToggle}
                     onDelete={onDelete}
+                    onTest={onTest}
+                    onShowTestResults={onShowTestResults}
+                    testStatus={testStatuses.get(server.name) || 'untested'}
+                    testResult={testResults.get(server.name) || null}
                   />
                 ))}
               </div>
@@ -92,6 +105,10 @@ const ServerList: React.FC<ServerListProps> = ({
                     onEdit={onEdit}
                     onToggle={onToggle}
                     onDelete={onDelete}
+                    onTest={onTest}
+                    onShowTestResults={onShowTestResults}
+                    testStatus={testStatuses.get(server.name) || 'untested'}
+                    testResult={testResults.get(server.name) || null}
                   />
                 ))}
               </div>

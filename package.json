@@ -1,8 +1,11 @@
 {
   "name": "mcp-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "MCP Server Manager for Claude Code projects",
   "main": "dist/main/main/main.js",
+  "bin": {
+    "mcp-manager": "./bin/mcp-manager.js"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -p tsconfig.main.json -w",
