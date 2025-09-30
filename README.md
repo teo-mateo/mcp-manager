@@ -7,6 +7,12 @@ A desktop application for managing Model Context Protocol (MCP) servers in Claud
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 
+## 📸 Screenshot
+
+![MCP Manager - Table View](docs/images/mcp-manager-table-view.png)
+
+*MCP Manager showing the table view with server list and console logging*
+
 ## ✨ Features
 
 ### Server Management
