@@ -7,6 +7,19 @@ A desktop application for managing Model Context Protocol (MCP) servers in Claud
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 
+## 🚀 Quick Install
+
+```bash
+git clone https://github.com/teo-mateo/mcp-manager.git
+cd mcp-manager
+npm install && npm run build && npm install -g .
+```
+
+Then run from any Claude Code project directory:
+```bash
+mcp-manager
+```
+
 ## 📸 Screenshot
 
 ![MCP Manager - Table View](docs/images/mcp-manager-table-view.png)
