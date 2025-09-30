@@ -43,7 +43,10 @@ A desktop application for managing Model Context Protocol (MCP) servers in Claud
 
 ### Installation
 
-#### Option 1: Global Installation (Recommended)
+> **💡 Recommended:** Install globally to use `mcp-manager` from any directory!
+
+<details open>
+<summary><b>📦 Global Installation (Recommended)</b></summary>
 
 Install MCP Manager globally to use it from any directory:
 
@@ -60,14 +63,17 @@ npm run build
 npm install -g .
 ```
 
-Now you can run it from anywhere:
+**Now you can run it from anywhere:**
 
 ```bash
 cd /path/to/your/claude/project
 mcp-manager
 ```
 
-#### Option 2: Development Mode
+</details>
+
+<details>
+<summary><b>🔧 Development Mode</b></summary>
 
 For development with hot-reload:
 
@@ -84,7 +90,10 @@ npm run dev
 NODE_ENV=development npx electron .
 ```
 
-#### Option 3: Shell Alias
+</details>
+
+<details>
+<summary><b>🔗 Shell Alias (Alternative)</b></summary>
 
 Add this to your `~/.bashrc` or `~/.zshrc`:
 
@@ -93,6 +102,8 @@ alias mcp-manager='node /path/to/mcp-manager/bin/mcp-manager.js'
 ```
 
 Then reload: `source ~/.bashrc` (or `~/.zshrc`)
+
+</details>
 
 ## 📖 Usage
 
