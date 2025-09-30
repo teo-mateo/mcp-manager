@@ -1,97 +1,145 @@
 # MCP Manager
 
-A desktop application for managing MCP (Model Context Protocol) servers in Claude Code projects.
+A desktop application for managing Model Context Protocol (MCP) servers in Claude Code. Features a modern GUI with modal-based editing, dual-mode JSON/Form editors, and support for both project-specific and global server configurations.
 
-## Features
+![MCP Manager](https://img.shields.io/badge/Electron-App-blue?logo=electron)
+![Node](https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js)
+![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 
-- View and manage MCP servers for the current project
-- Enable/disable servers
-- Add new servers via form or JSON
-- Edit existing server configurations
-- Project-based configuration (reads from `~/.claude.json`)
+## ✨ Features
 
-## Installation
+### Server Management
+- 📋 **View & Organize** - Clean list view of all MCP servers with status indicators
+- ✏️ **Dual Editor Modes** - Toggle between JSON and Form editors when adding/editing servers
+- 🔄 **Enable/Disable** - Quick toggle to enable or disable servers
+- 🗑️ **Delete** - Remove servers you no longer need
+- 🧪 **Test Servers** - Test connectivity and view available capabilities
+
+### Configuration Scopes
+- 🎯 **Project Scope** - Manage servers specific to the current Claude Code project
+- 🌍 **Global Scope** - Manage servers available across all projects
+- 🔀 **Easy Switching** - Toggle between project and global scopes instantly
+
+### User Interface
+- 💬 **Modal-Based Editing** - Add and edit servers without leaving the main view
+- 🎨 **Modern Design** - Clean, responsive interface with Tailwind CSS
+- 📝 **Smart Validation** - Real-time validation with helpful error messages
+- 💡 **Example Configs** - Built-in examples to get you started quickly
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- npm
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js)
+- **Claude Code** - The app manages servers for Claude Code projects
 
-### Global Installation
+### Installation
 
-There are several ways to install MCP Manager globally:
+#### Option 1: Global Installation (Recommended)
 
-#### Option 1: Install from source (Recommended)
+Install MCP Manager globally to use it from any directory:
 
 ```bash
 # Clone the repository
 git clone https://github.com/teo-mateo/mcp-manager.git
 cd mcp-manager
 
-# Install dependencies
+# Install dependencies and build
 npm install
-
-# Build the application
 npm run build
 
 # Install globally
 npm install -g .
-
-# Now you can run from any directory
-cd /your/claude/project
-mcp-manager
 ```
 
-#### Option 2: npm link (for development)
+Now you can run it from anywhere:
 
 ```bash
-# In the mcp-manager directory
-npm install
-npm run build
-npm link
-
-# Now you can run from any directory
-cd /your/claude/project
+cd /path/to/your/claude/project
 mcp-manager
 ```
 
-#### Option 3: Shell alias
+#### Option 2: Development Mode
+
+For development with hot-reload:
+
+```bash
+# Clone and install
+git clone https://github.com/teo-mateo/mcp-manager.git
+cd mcp-manager
+npm install
+
+# Terminal 1: Start build watchers
+npm run dev
+
+# Terminal 2: Run the app
+NODE_ENV=development npx electron .
+```
+
+#### Option 3: Shell Alias
 
 Add this to your `~/.bashrc` or `~/.zshrc`:
 
 ```bash
-alias mcp-manager='node /github/teo-mateo/mcp-manager/bin/mcp-manager.js'
+alias mcp-manager='node /path/to/mcp-manager/bin/mcp-manager.js'
 ```
 
-Then reload your shell configuration:
-```bash
-source ~/.bashrc  # or ~/.zshrc
-```
+Then reload: `source ~/.bashrc` (or `~/.zshrc`)
 
-## Usage
+## 📖 Usage
 
-After global installation, navigate to any Claude Code project directory and run:
+### Basic Usage
+
+Navigate to your Claude Code project and run:
 
 ```bash
 mcp-manager
 ```
 
-The application will:
-1. Detect the current directory as the project path
-2. Look for this project in `~/.claude.json`
-3. Display and allow management of MCP servers for that specific project
+The app will:
+1. ✅ Detect the current directory as your project path
+2. ✅ Load project-specific MCP servers from `~/.claude.json`
+3. ✅ Display an intuitive GUI for managing servers
 
-If the project doesn't exist in `~/.claude.json`, you'll see an error message instructing you to open the project in Claude Code first to initialize it.
+### Specifying a Project Path
 
-### Command Line Arguments
-
-You can optionally specify a different project path:
+You can specify a different project path:
 
 ```bash
-mcp-manager /path/to/project
+mcp-manager /path/to/another/project
 ```
 
-## Development
+### Managing Servers
+
+**Add a Server:**
+1. Click "Add Server" button
+2. Choose JSON or Form mode
+3. Enter server configuration
+4. Click "Add Server" to save
+
+**Edit a Server:**
+1. Click "Edit" on any server card
+2. Modify settings in JSON or Form mode
+3. Click "Save Changes"
+
+**Toggle Server:**
+- Click the toggle button to enable/disable
+
+**Delete Server:**
+- Click "Delete" on the server card, or use the delete button in the edit modal
+
+**Test Server:**
+- Click "Test" to check connectivity and view capabilities
+
+### Scope Management
+
+Use the scope toggle at the top to switch between:
+- **Project** - Servers specific to current project
+- **Global** - Servers available to all Claude Code projects
+
+## 🛠️ Development
 
 ### Setup
 
@@ -106,7 +154,7 @@ npm run dev
 NODE_ENV=development npx electron .
 ```
 
-### Build
+### Build & Test
 
 ```bash
 # Build for production
@@ -114,57 +162,160 @@ npm run build
 
 # Run production build
 npm start
+
+# Run linter
+npm run lint
+
+# Format code
+npm run format
 ```
 
 ### Project Structure
 
-- `src/main/` - Electron main process code
-- `src/renderer/` - React renderer process code
-- `src/shared/` - Shared types and utilities
-- `dist/` - Compiled output
-- `bin/` - Global executable script
+```
+mcp-manager/
+├── src/
+│   ├── main/              # Electron main process
+│   │   ├── main.ts        # Entry point, IPC handlers
+│   │   ├── preload.ts     # Secure IPC bridge
+│   │   └── services/      # Business logic
+│   ├── renderer/          # React frontend
+│   │   ├── App.tsx        # Main app component
+│   │   ├── components/    # Reusable UI components
+│   │   ├── screens/       # Screen components
+│   │   ├── hooks/         # React hooks
+│   │   └── services/      # Frontend API layer
+│   └── shared/            # Shared types and utilities
+│       ├── types.ts       # Core types
+│       ├── mcpTypes.ts    # MCP protocol types
+│       └── errors.ts      # Error definitions
+├── dist/                  # Build output
+├── bin/                   # Global executable script
+└── package.json
+```
 
-## How It Works
+## 🔧 How It Works
 
-MCP Manager is project-aware and integrates with Claude Code's configuration:
+### Architecture
 
-1. **Project Detection**: Uses the current working directory as the project path
-2. **Configuration Reading**: Reads from `~/.claude.json` under `projects[projectPath].mcpServers`
-3. **Scoped Management**: Only manages MCP servers for the current project
-4. **Safe Updates**: Preserves all other projects and root-level configuration when saving
+MCP Manager uses a **client-server architecture** within Electron:
 
-## Troubleshooting
+1. **Main Process** - Handles file I/O, configuration management, and MCP server testing
+2. **Renderer Process** - React-based UI running in a sandboxed environment
+3. **IPC Bridge** - Secure communication via `preload.ts` with context isolation
 
-### "Project not found" error
+### Configuration Management
 
-This means your current directory isn't registered as a project in Claude Code. To fix:
-1. Open the project in Claude Code
-2. This will initialize the project in `~/.claude.json`
+The app integrates seamlessly with Claude Code's configuration structure:
+
+**File Location:** `~/.claude.json`
+
+**Structure:**
+```json
+{
+  "projects": {
+    "/absolute/path/to/project": {
+      "mcpServers": { /* active servers */ },
+      "mcpServers_disabled": { /* disabled servers */ }
+    }
+  },
+  "mcpServers": { /* global active servers */ },
+  "mcpServers_disabled": { /* global disabled servers */ }
+}
+```
+
+**Key Features:**
+- ✅ **Project Detection** - Uses current working directory as project path
+- ✅ **Dual Scope** - Manages both project-specific and global servers
+- ✅ **Atomic Writes** - Safe file operations with backup creation
+- ✅ **Conflict Detection** - Timestamp-based change detection
+- ✅ **Preservation** - Keeps all other settings intact when updating
+
+## ❓ Troubleshooting
+
+### "Project not found" Error
+
+**Problem:** Your current directory isn't registered in Claude Code.
+
+**Solution:**
+1. Open the project in Claude Code first
+2. This initializes the project in `~/.claude.json`
 3. Run `mcp-manager` again
 
-### Application won't start globally
+**Alternative:** Switch to **Global** scope to manage global servers
 
-Ensure you've built the application and installed it correctly:
+### Application Won't Start
+
+**Check your installation:**
 ```bash
+# Verify build succeeded
 npm run build
+
+# Check global installation
+npm list -g mcp-manager
+
+# Try reinstalling
 npm install -g .
 ```
 
-### Permission errors during global install
+### Permission Errors During Install
 
-If you get permission errors, you can either:
-- Use a Node version manager like nvm (recommended)
-- Configure npm to use a different prefix: `npm config set prefix ~/.npm-global`
-- Use sudo (not recommended): `sudo npm install -g .`
+**Recommended Solutions:**
 
-## Uninstalling
+1. **Use Node Version Manager (Best):**
+   ```bash
+   # Install nvm
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-To uninstall the globally installed package:
+   # Install Node via nvm
+   nvm install 18
+   nvm use 18
+   ```
+
+2. **Configure npm prefix:**
+   ```bash
+   npm config set prefix ~/.npm-global
+   export PATH=~/.npm-global/bin:$PATH
+   ```
+
+3. **Use sudo (Not Recommended):**
+   ```bash
+   sudo npm install -g .
+   ```
+
+### Dev Server Connection Errors
+
+If running in development mode and seeing connection errors:
+
+- Make sure `npm run dev` is running in one terminal
+- Use `NODE_ENV=development npx electron .` in another terminal
+- Check that port 5173 is not in use by another process
+
+### Build Failures
+
+**Common causes:**
+- Node.js version too old (need 18+)
+- Missing dependencies: run `npm install`
+- TypeScript errors: run `npm run lint` to check
+
+## 📦 Uninstalling
+
+To remove the globally installed package:
 
 ```bash
 npm uninstall -g mcp-manager
 ```
 
-## License
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
 
 ISC
+
+## 🔗 Links
+
+- [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
+- [Claude Code](https://claude.com/claude-code)
+- [Report Issues](https://github.com/teo-mateo/mcp-manager/issues)

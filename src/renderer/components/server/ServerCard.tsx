@@ -38,10 +38,22 @@ const ServerCard: React.FC<ServerCardProps> = ({
   className = '',
 }) => {
   const [showRawJson, setShowRawJson] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const statusColor = server.enabled ? 'text-green-600' : 'text-red-600';
   const statusBg = server.enabled ? 'bg-green-50' : 'bg-red-50';
   const statusText = server.enabled ? 'Active' : 'Disabled';
+
+  const handleCopyJson = () => {
+    const jsonConfig = {
+      command: server.command,
+      ...(server.args && server.args.length > 0 && { args: server.args }),
+      ...(server.env && Object.keys(server.env).length > 0 && { env: server.env }),
+    };
+    navigator.clipboard.writeText(JSON.stringify(jsonConfig, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const getTestStatusInfo = () => {
     switch (testStatus) {
@@ -68,15 +80,18 @@ const ServerCard: React.FC<ServerCardProps> = ({
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColor} ${statusBg}`}>
                 {statusText}
               </span>
-              <button
-                onClick={() => testStatus !== 'untested' ? onShowTestResults(server.name) : undefined}
-                className={`px-2 py-1 text-xs font-medium rounded-full ${testInfo.color} ${testInfo.bg} ${
-                  testStatus !== 'untested' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
-                }`}
-                disabled={testStatus === 'testing'}
-              >
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${testInfo.color} ${testInfo.bg} flex items-center gap-1`}>
                 {testInfo.icon} {testInfo.text}
-              </button>
+                {testStatus === 'passed' && testResult && (
+                  <button
+                    onClick={() => onShowTestResults(server.name)}
+                    className="ml-1 text-blue-600 hover:text-blue-800 underline"
+                    title="View test results"
+                  >
+                    details
+                  </button>
+                )}
+              </span>
             </div>
           </div>
 
@@ -116,13 +131,36 @@ const ServerCard: React.FC<ServerCardProps> = ({
           </div>
 
           {/* Raw JSON Toggle Button */}
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-2">
             <button
               onClick={() => setShowRawJson(!showRawJson)}
               className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center"
             >
               {showRawJson ? '▼' : '▶'} Raw JSON
             </button>
+            {showRawJson && (
+              <button
+                onClick={handleCopyJson}
+                className="text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                title={copied ? 'Copied!' : 'Copy JSON'}
+              >
+                {copied ? (
+                  <>
+                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-green-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>Copy</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Raw JSON Display */}

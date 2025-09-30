@@ -10,6 +10,7 @@ import { ServerData } from '../components/server/ServerCard';
 import ErrorMessage from '../components/common/ErrorMessage';
 import ScopeToggle from '../components/common/ScopeToggle';
 import TestResultsModal from '../components/TestResultsModal';
+import ServerEditorModal from '../components/ServerEditorModal';
 import { useConfigScope } from '../hooks/useConfigScope';
 import { useProjectPath } from '../hooks/useProjectPath';
 import { ConfigError } from '../../shared/errors';
@@ -18,18 +19,10 @@ import { McpServer } from '../../shared/types';
 import { ConfigAPI } from '../services/configApi';
 
 interface ServerListScreenProps {
-  onEdit: (serverName: string, serverData: ServerData) => void;
-  onToggle: (serverName: string) => void;
-  onDelete: (serverName: string) => void;
-  onAddServer: () => void;
   className?: string;
 }
 
 const ServerListScreen: React.FC<ServerListScreenProps> = ({
-  onEdit,
-  onToggle,
-  onDelete,
-  onAddServer,
   className = '',
 }) => {
   const { scope, servers, error, loading, setScope, refreshServers } = useConfigScope('project');
@@ -38,8 +31,12 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   // Test state management
   const [testStatuses, setTestStatuses] = useState<Map<string, TestStatus>>(new Map());
   const [testResults, setTestResults] = useState<Map<string, TestResult>>(new Map());
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<string>('');
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [selectedTestServer, setSelectedTestServer] = useState<string>('');
+
+  // Editor modal state
+  const [editorModalOpen, setEditorModalOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<ServerData | null>(null);
 
   const handleTest = async (serverName: string) => {
     // Find the server config
@@ -80,8 +77,8 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
 
   const handleShowTestResults = (serverName: string) => {
     console.log('Opening test results for', serverName, 'Result:', testResults.get(serverName));
-    setSelectedServer(serverName);
-    setModalOpen(true);
+    setSelectedTestServer(serverName);
+    setTestModalOpen(true);
   };
 
   const handleToggle = async (serverName: string) => {
@@ -103,6 +100,45 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
         console.error('Error deleting server:', error);
         alert(`Error deleting server: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    }
+  };
+
+  const handleAddServer = () => {
+    setEditingServer(null);
+    setEditorModalOpen(true);
+  };
+
+  const handleEditServer = (serverName: string, serverData: ServerData) => {
+    setEditingServer(serverData);
+    setEditorModalOpen(true);
+  };
+
+  const handleSaveServer = async (serverName: string, config: McpServer, oldServerName?: string) => {
+    try {
+      if (oldServerName && oldServerName !== serverName) {
+        // Name changed - use update
+        await ConfigAPI.updateServer(oldServerName, serverName, config, scope);
+      } else if (oldServerName) {
+        // Edit existing server (no name change)
+        await ConfigAPI.updateServer(oldServerName, serverName, config, scope);
+      } else {
+        // Add new server
+        await ConfigAPI.addServer(serverName, config, scope);
+      }
+      await refreshServers();
+    } catch (error) {
+      console.error('Error saving server:', error);
+      throw error; // Re-throw to let modal handle the error display
+    }
+  };
+
+  const handleDeleteFromModal = async (serverName: string) => {
+    try {
+      await ConfigAPI.deleteServer(serverName, scope);
+      await refreshServers();
+    } catch (error) {
+      console.error('Error deleting server:', error);
+      throw error; // Re-throw to let modal handle the error display
     }
   };
 
@@ -190,20 +226,28 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
       )}
       <ServerList
         servers={servers}
-        onEdit={onEdit}
+        onEdit={handleEditServer}
         onToggle={handleToggle}
         onDelete={handleDelete}
-        onAddServer={onAddServer}
+        onAddServer={handleAddServer}
         onTest={handleTest}
         onShowTestResults={handleShowTestResults}
         testStatuses={testStatuses}
         testResults={testResults}
       />
       <TestResultsModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        serverName={selectedServer}
-        testResult={testResults.get(selectedServer) || null}
+        isOpen={testModalOpen}
+        onClose={() => setTestModalOpen(false)}
+        serverName={selectedTestServer}
+        testResult={testResults.get(selectedTestServer) || null}
+      />
+      <ServerEditorModal
+        isOpen={editorModalOpen}
+        onClose={() => setEditorModalOpen(false)}
+        onSave={handleSaveServer}
+        onDelete={handleDeleteFromModal}
+        server={editingServer}
+        scope={scope}
       />
     </div>
   );
