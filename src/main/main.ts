@@ -205,6 +205,170 @@ function setupIpcHandlers(): void {
       }
     }
   );
+
+  // Update MCP Server handler
+  ipcMain.handle(
+    IPC_CHANNELS.UPDATE_MCP_SERVER,
+    async (_, oldServerName: string, newServerName: string, serverConfig: McpServer, scope: ConfigScope = 'project'): Promise<void> => {
+      try {
+        console.log('IPC: Updating MCP server:', oldServerName, '->', newServerName, 'scope:', scope);
+
+        const manager = scope === 'global' ? globalConfigManager : projectConfigManager;
+
+        // Read current config
+        const fileState = await manager.readConfig();
+
+        // Find the server in active or disabled servers
+        let isInActive = false;
+        let isInDisabled = false;
+
+        if (fileState.config.mcpServers && fileState.config.mcpServers[oldServerName]) {
+          isInActive = true;
+        } else if (fileState.config.mcpServers_disabled && fileState.config.mcpServers_disabled[oldServerName]) {
+          isInDisabled = true;
+        } else {
+          throw new Error(`Server "${oldServerName}" not found`);
+        }
+
+        // If name is changing, check if new name already exists
+        if (oldServerName !== newServerName) {
+          const existingServers = {
+            ...fileState.config.mcpServers,
+            ...fileState.config.mcpServers_disabled
+          };
+
+          if (existingServers[newServerName]) {
+            throw new Error(`A server with the name "${newServerName}" already exists`);
+          }
+        }
+
+        // Update the config
+        const updatedConfig = { ...fileState.config };
+
+        if (isInActive) {
+          // Remove old entry and add new one
+          const { [oldServerName]: removed, ...remainingServers } = updatedConfig.mcpServers || {};
+          updatedConfig.mcpServers = {
+            ...remainingServers,
+            [newServerName]: serverConfig
+          };
+        } else if (isInDisabled) {
+          // Remove old entry and add new one
+          const { [oldServerName]: removed, ...remainingServers } = updatedConfig.mcpServers_disabled || {};
+          updatedConfig.mcpServers_disabled = {
+            ...remainingServers,
+            [newServerName]: serverConfig
+          };
+        }
+
+        // Save updated config
+        await manager.writeConfig(updatedConfig, fileState.lastModified);
+        console.log('IPC: Server updated successfully:', oldServerName, '->', newServerName);
+      } catch (error) {
+        console.error('Error updating MCP server:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Delete MCP Server handler
+  ipcMain.handle(
+    IPC_CHANNELS.DELETE_MCP_SERVER,
+    async (_, serverName: string, scope: ConfigScope = 'project'): Promise<void> => {
+      try {
+        console.log('IPC: Deleting MCP server:', serverName, 'scope:', scope);
+
+        const manager = scope === 'global' ? globalConfigManager : projectConfigManager;
+
+        // Read current config
+        const fileState = await manager.readConfig();
+
+        // Find and remove the server from active or disabled servers
+        let found = false;
+        const updatedConfig = { ...fileState.config };
+
+        if (updatedConfig.mcpServers && updatedConfig.mcpServers[serverName]) {
+          const { [serverName]: removed, ...remainingServers } = updatedConfig.mcpServers;
+          updatedConfig.mcpServers = remainingServers;
+          found = true;
+        }
+
+        if (updatedConfig.mcpServers_disabled && updatedConfig.mcpServers_disabled[serverName]) {
+          const { [serverName]: removed, ...remainingServers } = updatedConfig.mcpServers_disabled;
+          updatedConfig.mcpServers_disabled = remainingServers;
+          found = true;
+        }
+
+        if (!found) {
+          throw new Error(`Server "${serverName}" not found`);
+        }
+
+        // Save updated config
+        await manager.writeConfig(updatedConfig, fileState.lastModified);
+        console.log('IPC: Server deleted successfully:', serverName);
+      } catch (error) {
+        console.error('Error deleting MCP server:', error);
+        throw error;
+      }
+    }
+  );
+
+  // Toggle MCP Server enabled/disabled handler
+  ipcMain.handle(
+    IPC_CHANNELS.TOGGLE_MCP_SERVER,
+    async (_, serverName: string, scope: ConfigScope = 'project'): Promise<void> => {
+      try {
+        console.log('IPC: Toggling MCP server:', serverName, 'scope:', scope);
+
+        const manager = scope === 'global' ? globalConfigManager : projectConfigManager;
+
+        // Read current config
+        const fileState = await manager.readConfig();
+
+        let serverConfig: McpServer;
+        let isCurrentlyActive = false;
+
+        // Find the server in active or disabled servers
+        if (fileState.config.mcpServers && fileState.config.mcpServers[serverName]) {
+          serverConfig = fileState.config.mcpServers[serverName];
+          isCurrentlyActive = true;
+        } else if (fileState.config.mcpServers_disabled && fileState.config.mcpServers_disabled[serverName]) {
+          serverConfig = fileState.config.mcpServers_disabled[serverName];
+          isCurrentlyActive = false;
+        } else {
+          throw new Error(`Server "${serverName}" not found`);
+        }
+
+        // Update the config
+        const updatedConfig = { ...fileState.config };
+
+        if (isCurrentlyActive) {
+          // Move from active to disabled
+          const { [serverName]: removed, ...remainingActive } = updatedConfig.mcpServers || {};
+          updatedConfig.mcpServers = remainingActive;
+          updatedConfig.mcpServers_disabled = {
+            ...updatedConfig.mcpServers_disabled,
+            [serverName]: serverConfig
+          };
+        } else {
+          // Move from disabled to active
+          const { [serverName]: removed, ...remainingDisabled } = updatedConfig.mcpServers_disabled || {};
+          updatedConfig.mcpServers_disabled = remainingDisabled;
+          updatedConfig.mcpServers = {
+            ...updatedConfig.mcpServers,
+            [serverName]: serverConfig
+          };
+        }
+
+        // Save updated config
+        await manager.writeConfig(updatedConfig, fileState.lastModified);
+        console.log('IPC: Server toggled successfully:', serverName, isCurrentlyActive ? 'disabled' : 'enabled');
+      } catch (error) {
+        console.error('Error toggling MCP server:', error);
+        throw error;
+      }
+    }
+  );
 }
 
 app.whenReady().then(async () => {

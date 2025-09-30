@@ -9,7 +9,7 @@ import { TestResult, TestStatus } from '../../../shared/mcpTypes';
 
 interface ServerListProps {
   servers: ServerData[];
-  onEdit: (serverName: string) => void;
+  onEdit: (serverName: string, serverData: ServerData) => void;
   onToggle: (serverName: string) => void;
   onDelete: (serverName: string) => void;
   onAddServer: () => void;
@@ -78,7 +78,7 @@ const ServerList: React.FC<ServerListProps> = ({
                   <ServerCard
                     key={server.name}
                     server={server}
-                    onEdit={onEdit}
+                    onEdit={(serverName) => onEdit(serverName, server)}
                     onToggle={onToggle}
                     onDelete={onDelete}
                     onTest={onTest}
@@ -102,7 +102,7 @@ const ServerList: React.FC<ServerListProps> = ({
                   <ServerCard
                     key={server.name}
                     server={server}
-                    onEdit={onEdit}
+                    onEdit={(serverName) => onEdit(serverName, server)}
                     onToggle={onToggle}
                     onDelete={onDelete}
                     onTest={onTest}

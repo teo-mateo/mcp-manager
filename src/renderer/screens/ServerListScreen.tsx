@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import ServerList from '../components/server/ServerList';
+import { ServerData } from '../components/server/ServerCard';
 import ErrorMessage from '../components/common/ErrorMessage';
 import ScopeToggle from '../components/common/ScopeToggle';
 import TestResultsModal from '../components/TestResultsModal';
@@ -14,9 +15,10 @@ import { useProjectPath } from '../hooks/useProjectPath';
 import { ConfigError } from '../../shared/errors';
 import { TestResult, TestStatus } from '../../shared/mcpTypes';
 import { McpServer } from '../../shared/types';
+import { ConfigAPI } from '../services/configApi';
 
 interface ServerListScreenProps {
-  onEdit: (serverName: string) => void;
+  onEdit: (serverName: string, serverData: ServerData) => void;
   onToggle: (serverName: string) => void;
   onDelete: (serverName: string) => void;
   onAddServer: () => void;
@@ -80,6 +82,28 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
     console.log('Opening test results for', serverName, 'Result:', testResults.get(serverName));
     setSelectedServer(serverName);
     setModalOpen(true);
+  };
+
+  const handleToggle = async (serverName: string) => {
+    try {
+      await ConfigAPI.toggleServer(serverName, scope);
+      await refreshServers();
+    } catch (error) {
+      console.error('Error toggling server:', error);
+      alert(`Error toggling server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleDelete = async (serverName: string) => {
+    if (confirm(`Are you sure you want to delete the server "${serverName}"? This action cannot be undone.`)) {
+      try {
+        await ConfigAPI.deleteServer(serverName, scope);
+        await refreshServers();
+      } catch (error) {
+        console.error('Error deleting server:', error);
+        alert(`Error deleting server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
   };
 
   // Check if the error is a project not found error
@@ -167,8 +191,8 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
       <ServerList
         servers={servers}
         onEdit={onEdit}
-        onToggle={onToggle}
-        onDelete={onDelete}
+        onToggle={handleToggle}
+        onDelete={handleDelete}
         onAddServer={onAddServer}
         onTest={handleTest}
         onShowTestResults={handleShowTestResults}

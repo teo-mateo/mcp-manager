@@ -84,6 +84,9 @@ export interface IpcChannels {
   GET_CURRENT_SCOPE: 'get-current-scope';  // Get current scope (project/global)
   TEST_MCP_SERVER: 'test-mcp-server';  // Test MCP server capabilities
   ADD_MCP_SERVER: 'add-mcp-server';  // Add new MCP server
+  UPDATE_MCP_SERVER: 'update-mcp-server';  // Update existing MCP server
+  DELETE_MCP_SERVER: 'delete-mcp-server';  // Delete MCP server
+  TOGGLE_MCP_SERVER: 'toggle-mcp-server';  // Toggle MCP server enabled/disabled
 }
 
 export const IPC_CHANNELS: IpcChannels = {
@@ -98,4 +101,7 @@ export const IPC_CHANNELS: IpcChannels = {
   GET_CURRENT_SCOPE: 'get-current-scope',
   TEST_MCP_SERVER: 'test-mcp-server',
   ADD_MCP_SERVER: 'add-mcp-server',
+  UPDATE_MCP_SERVER: 'update-mcp-server',
+  DELETE_MCP_SERVER: 'delete-mcp-server',
+  TOGGLE_MCP_SERVER: 'toggle-mcp-server',
 };

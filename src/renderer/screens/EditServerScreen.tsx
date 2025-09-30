@@ -5,12 +5,13 @@
 import React from 'react';
 import ServerForm from '../components/server/ServerForm';
 import { ServerData } from '../components/server/ServerCard';
+import { ConfigAPI } from '../services/configApi';
+import { useConfigScope } from '../hooks/useConfigScope';
 
 interface EditServerScreenProps {
   server: ServerData;
-  onSave: (serverData: ServerData) => void;
+  onSave: () => void;
   onCancel: () => void;
-  onDelete: (serverName: string) => void;
   className?: string;
 }
 
@@ -18,9 +19,39 @@ const EditServerScreen: React.FC<EditServerScreenProps> = ({
   server,
   onSave,
   onCancel,
-  onDelete,
   className = '',
 }) => {
+  const { scope, refreshServers } = useConfigScope('project');
+
+  const handleSave = async (serverData: ServerData) => {
+    try {
+      // Convert ServerData to McpServer format
+      const serverConfig = ConfigAPI.convertFromServerData(serverData);
+
+      // Update the server (handle name changes)
+      await ConfigAPI.updateServer(server.name, serverData.name, serverConfig, scope);
+
+      // Refresh the server list
+      await refreshServers();
+
+      // Navigate back to server list
+      onSave();
+    } catch (error) {
+      console.error('Error updating server:', error);
+      alert(`Error updating server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleDelete = async (serverName: string) => {
+    try {
+      await ConfigAPI.deleteServer(serverName, scope);
+      await refreshServers();
+      onSave(); // Navigate back to server list
+    } catch (error) {
+      console.error('Error deleting server:', error);
+      alert(`Error deleting server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
   return (
     <div className={className}>
       <div className="mb-6">
@@ -32,9 +63,9 @@ const EditServerScreen: React.FC<EditServerScreenProps> = ({
 
       <ServerForm
         initialData={server}
-        onSave={onSave}
+        onSave={handleSave}
         onCancel={onCancel}
-        onDelete={onDelete}
+        onDelete={handleDelete}
         isEdit={true}
       />
     </div>

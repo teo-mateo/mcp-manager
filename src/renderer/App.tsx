@@ -34,16 +34,21 @@ const App: React.FC = () => {
     setSelectedServer(null);
   };
 
-  const handleEdit = (serverName: string) => {
-    alert(`Edit ${serverName} not implemented yet`);
+  const handleEdit = (serverName: string, serverData: ServerData) => {
+    setSelectedServer(serverData);
+    setCurrentScreen('edit-server');
   };
 
-  const handleToggle = (serverName: string) => {
-    alert(`Toggle ${serverName} not implemented yet`);
+  const handleToggle = async (serverName: string) => {
+    // Note: This is a placeholder implementation - ideally we'd pass scope context
+    // For now, we'll let the ServerListScreen handle toggle operations
+    alert(`Toggle functionality should be handled by the server list screen. This will be implemented when we add proper state management.`);
   };
 
-  const handleDelete = (serverName: string) => {
-    alert(`Delete ${serverName} not implemented yet`);
+  const handleDelete = async (serverName: string) => {
+    // Note: This is a placeholder implementation - ideally we'd pass scope context
+    // For now, we'll let the ServerListScreen handle delete operations
+    alert(`Delete functionality should be handled by the server list screen. This will be implemented when we add proper state management.`);
   };
 
   const handleAddServer = () => {
@@ -92,7 +97,6 @@ const App: React.FC = () => {
             server={selectedServer}
             onSave={handleSave}
             onCancel={handleCancel}
-            onDelete={handleDelete}
           />
         ) : (
           <div className="text-center py-12">

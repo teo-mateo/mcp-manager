@@ -24,6 +24,9 @@ const IPC_CHANNELS = {
   GET_CURRENT_SCOPE: 'get-current-scope',
   TEST_MCP_SERVER: 'test-mcp-server',
   ADD_MCP_SERVER: 'add-mcp-server',
+  UPDATE_MCP_SERVER: 'update-mcp-server',
+  DELETE_MCP_SERVER: 'delete-mcp-server',
+  TOGGLE_MCP_SERVER: 'toggle-mcp-server',
 };
 
 console.log('PRELOAD: IPC_CHANNELS:', IPC_CHANNELS);
@@ -44,6 +47,12 @@ export interface ElectronAPI {
   testServer: (serverName: string, serverConfig: any) => Promise<any>;
   // eslint-disable-next-line no-unused-vars
   addServer: (serverName: string, serverConfig: any, scope?: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
+  updateServer: (oldServerName: string, newServerName: string, serverConfig: any, scope?: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
+  deleteServer: (serverName: string, scope?: string) => Promise<void>;
+  // eslint-disable-next-line no-unused-vars
+  toggleServer: (serverName: string, scope?: string) => Promise<void>;
 }
 
 const electronAPI = {
@@ -82,6 +91,18 @@ const electronAPI = {
   addServer: (serverName: string, serverConfig: any, scope: any) => {
     console.log('PRELOAD: addServer called for:', serverName, 'scope:', scope);
     return ipcRenderer.invoke(IPC_CHANNELS.ADD_MCP_SERVER, serverName, serverConfig, scope);
+  },
+  updateServer: (oldServerName: string, newServerName: string, serverConfig: any, scope: any) => {
+    console.log('PRELOAD: updateServer called for:', oldServerName, '->', newServerName, 'scope:', scope);
+    return ipcRenderer.invoke(IPC_CHANNELS.UPDATE_MCP_SERVER, oldServerName, newServerName, serverConfig, scope);
+  },
+  deleteServer: (serverName: string, scope: any) => {
+    console.log('PRELOAD: deleteServer called for:', serverName, 'scope:', scope);
+    return ipcRenderer.invoke(IPC_CHANNELS.DELETE_MCP_SERVER, serverName, scope);
+  },
+  toggleServer: (serverName: string, scope: any) => {
+    console.log('PRELOAD: toggleServer called for:', serverName, 'scope:', scope);
+    return ipcRenderer.invoke(IPC_CHANNELS.TOGGLE_MCP_SERVER, serverName, scope);
   },
 };
 

@@ -143,4 +143,52 @@ export class ConfigAPI {
 
     return window.electronAPI.addServer(serverName, serverConfig, scope);
   }
+
+  static async updateServer(oldServerName: string, newServerName: string, serverConfig: McpServer, scope: ConfigScope = 'project'): Promise<void> {
+    // Wait for electronAPI to be available
+    let attempts = 0;
+    const maxAttempts = 10;
+    while (!window.electronAPI && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+
+    if (!window.electronAPI) {
+      throw new Error('electronAPI not available');
+    }
+
+    return window.electronAPI.updateServer(oldServerName, newServerName, serverConfig, scope);
+  }
+
+  static async deleteServer(serverName: string, scope: ConfigScope = 'project'): Promise<void> {
+    // Wait for electronAPI to be available
+    let attempts = 0;
+    const maxAttempts = 10;
+    while (!window.electronAPI && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+
+    if (!window.electronAPI) {
+      throw new Error('electronAPI not available');
+    }
+
+    return window.electronAPI.deleteServer(serverName, scope);
+  }
+
+  static async toggleServer(serverName: string, scope: ConfigScope = 'project'): Promise<void> {
+    // Wait for electronAPI to be available
+    let attempts = 0;
+    const maxAttempts = 10;
+    while (!window.electronAPI && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+
+    if (!window.electronAPI) {
+      throw new Error('electronAPI not available');
+    }
+
+    return window.electronAPI.toggleServer(serverName, scope);
+  }
 }

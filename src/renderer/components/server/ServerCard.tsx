@@ -2,7 +2,7 @@
 // ServerCard component for MCP Manager UI
 // Purpose: Display individual server information with action buttons
 
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '../common/Button';
 import { TestResult, TestStatus } from '../../../shared/mcpTypes';
 
@@ -37,6 +37,8 @@ const ServerCard: React.FC<ServerCardProps> = ({
   testResult,
   className = '',
 }) => {
+  const [showRawJson, setShowRawJson] = useState(false);
+
   const statusColor = server.enabled ? 'text-green-600' : 'text-red-600';
   const statusBg = server.enabled ? 'bg-green-50' : 'bg-red-50';
   const statusText = server.enabled ? 'Active' : 'Disabled';
@@ -112,6 +114,33 @@ const ServerCard: React.FC<ServerCardProps> = ({
               </div>
             )}
           </div>
+
+          {/* Raw JSON Toggle Button */}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowRawJson(!showRawJson)}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center"
+            >
+              {showRawJson ? '▼' : '▶'} Raw JSON
+            </button>
+          </div>
+
+          {/* Raw JSON Display */}
+          {showRawJson && (
+            <div className="mt-2 p-3 bg-gray-50 rounded border">
+              <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap overflow-x-auto">
+                {JSON.stringify(
+                  {
+                    command: server.command,
+                    ...(server.args && server.args.length > 0 && { args: server.args }),
+                    ...(server.env && Object.keys(server.env).length > 0 && { env: server.env }),
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col space-y-2 ml-4">
