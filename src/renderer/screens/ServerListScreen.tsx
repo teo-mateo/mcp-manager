@@ -38,6 +38,9 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   const [editorModalOpen, setEditorModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<ServerData | null>(null);
 
+  // Console log state for test failures
+  const [consoleLogs, setConsoleLogs] = useState<Array<{timestamp: Date, serverName: string, message: string, type: 'error' | 'info'}>>([]);
+
   const handleTest = async (serverName: string) => {
     // Find the server config
     const server = servers.find(s => s.name === serverName);
@@ -45,6 +48,14 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
 
     // Set testing status
     setTestStatuses(prev => new Map(prev).set(serverName, 'testing'));
+
+    // Add info log
+    setConsoleLogs(prev => [...prev, {
+      timestamp: new Date(),
+      serverName,
+      message: `Testing server "${serverName}"...`,
+      type: 'info'
+    }]);
 
     try {
       // Convert ServerData to McpServer format
@@ -61,17 +72,41 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
       console.log('Test completed for', serverName, 'Result:', result);
       setTestResults(prev => new Map(prev).set(serverName, result));
       setTestStatuses(prev => new Map(prev).set(serverName, result.success ? 'passed' : 'failed'));
+
+      if (result.success) {
+        setConsoleLogs(prev => [...prev, {
+          timestamp: new Date(),
+          serverName,
+          message: `✓ Test passed for "${serverName}"`,
+          type: 'info'
+        }]);
+      } else {
+        setConsoleLogs(prev => [...prev, {
+          timestamp: new Date(),
+          serverName,
+          message: `✗ Test failed for "${serverName}": ${result.error || 'Unknown error'}`,
+          type: 'error'
+        }]);
+      }
     } catch (error) {
       // Handle test error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorResult: TestResult = {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         timestamp: new Date(),
         duration: 0,
       };
 
       setTestResults(prev => new Map(prev).set(serverName, errorResult));
       setTestStatuses(prev => new Map(prev).set(serverName, 'failed'));
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✗ Test failed for "${serverName}": ${errorMessage}`,
+        type: 'error'
+      }]);
     }
   };
 
@@ -82,23 +117,72 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   };
 
   const handleToggle = async (serverName: string) => {
+    const server = servers.find(s => s.name === serverName);
+    const action = server?.enabled ? 'Disabling' : 'Enabling';
+
+    setConsoleLogs(prev => [...prev, {
+      timestamp: new Date(),
+      serverName,
+      message: `${action} server "${serverName}"...`,
+      type: 'info'
+    }]);
+
     try {
       await ConfigAPI.toggleServer(serverName, scope);
       await refreshServers();
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✓ Server "${serverName}" ${server?.enabled ? 'disabled' : 'enabled'} successfully`,
+        type: 'info'
+      }]);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error toggling server:', error);
-      alert(`Error toggling server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✗ Failed to toggle server "${serverName}": ${errorMessage}`,
+        type: 'error'
+      }]);
+
+      alert(`Error toggling server: ${errorMessage}`);
     }
   };
 
   const handleDelete = async (serverName: string) => {
     if (confirm(`Are you sure you want to delete the server "${serverName}"? This action cannot be undone.`)) {
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `Deleting server "${serverName}"...`,
+        type: 'info'
+      }]);
+
       try {
         await ConfigAPI.deleteServer(serverName, scope);
         await refreshServers();
+
+        setConsoleLogs(prev => [...prev, {
+          timestamp: new Date(),
+          serverName,
+          message: `✓ Server "${serverName}" deleted successfully`,
+          type: 'info'
+        }]);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error deleting server:', error);
-        alert(`Error deleting server: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+        setConsoleLogs(prev => [...prev, {
+          timestamp: new Date(),
+          serverName,
+          message: `✗ Failed to delete server "${serverName}": ${errorMessage}`,
+          type: 'error'
+        }]);
+
+        alert(`Error deleting server: ${errorMessage}`);
       }
     }
   };
@@ -114,6 +198,16 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   };
 
   const handleSaveServer = async (serverName: string, config: McpServer, oldServerName?: string) => {
+    const isEdit = !!oldServerName;
+    const action = isEdit ? 'Updating' : 'Adding';
+
+    setConsoleLogs(prev => [...prev, {
+      timestamp: new Date(),
+      serverName: oldServerName || serverName,
+      message: `${action} server "${serverName}"...`,
+      type: 'info'
+    }]);
+
     try {
       if (oldServerName && oldServerName !== serverName) {
         // Name changed - use update
@@ -126,18 +220,57 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
         await ConfigAPI.addServer(serverName, config, scope);
       }
       await refreshServers();
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✓ Server "${serverName}" ${isEdit ? 'updated' : 'added'} successfully`,
+        type: 'info'
+      }]);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error saving server:', error);
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName: oldServerName || serverName,
+        message: `✗ Failed to ${isEdit ? 'update' : 'add'} server "${serverName}": ${errorMessage}`,
+        type: 'error'
+      }]);
+
       throw error; // Re-throw to let modal handle the error display
     }
   };
 
   const handleDeleteFromModal = async (serverName: string) => {
+    setConsoleLogs(prev => [...prev, {
+      timestamp: new Date(),
+      serverName,
+      message: `Deleting server "${serverName}"...`,
+      type: 'info'
+    }]);
+
     try {
       await ConfigAPI.deleteServer(serverName, scope);
       await refreshServers();
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✓ Server "${serverName}" deleted successfully`,
+        type: 'info'
+      }]);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error deleting server:', error);
+
+      setConsoleLogs(prev => [...prev, {
+        timestamp: new Date(),
+        serverName,
+        message: `✗ Failed to delete server "${serverName}": ${errorMessage}`,
+        type: 'error'
+      }]);
+
       throw error; // Re-throw to let modal handle the error display
     }
   };
@@ -148,9 +281,12 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   // Don't show project not found error for global scope
   const shouldShowError = error && (scope === 'global' || !isProjectNotFound || !loading);
 
+  // Calculate console height for padding
+  const consoleHeight = consoleLogs.length > 0 ? '140px' : '0px';
+
   if (shouldShowError) {
     return (
-      <div className={className}>
+      <div className={className} style={{paddingBottom: consoleHeight}}>
         <ScopeToggle
           currentScope={scope}
           onScopeChange={setScope}
@@ -177,7 +313,7 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
 
   if (loading && !servers.length) {
     return (
-      <div className={className}>
+      <div className={className} style={{paddingBottom: consoleHeight}}>
         <ScopeToggle
           currentScope={scope}
           onScopeChange={setScope}
@@ -191,7 +327,7 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
   }
 
   return (
-    <div className={className}>
+    <div className={className} style={{paddingBottom: consoleHeight}}>
       <ScopeToggle
         currentScope={scope}
         onScopeChange={setScope}
@@ -249,6 +385,51 @@ const ServerListScreen: React.FC<ServerListScreenProps> = ({
         server={editingServer}
         scope={scope}
       />
+
+      {/* Console Log Panel */}
+      {consoleLogs.length > 0 && (
+        <div
+          className="fixed left-0 right-0 bg-gray-900 text-white border-t border-gray-700 shadow-lg z-50"
+          style={{
+            bottom: '0',
+            height: '140px'
+          }}
+        >
+          <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700" style={{height: '32px'}}>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-xs font-medium">Console ({consoleLogs.length})</span>
+            </div>
+            <button
+              onClick={() => setConsoleLogs([])}
+              className="text-xs text-gray-400 hover:text-white transition-colors"
+              title="Clear console"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="overflow-y-auto p-3 font-mono" style={{fontSize: '0.65rem', height: '108px', lineHeight: '1.5em'}}>
+            {consoleLogs.slice(-50).reverse().map((log, index) => (
+              <div
+                key={index}
+                className={`${log.type === 'error' ? 'text-red-400' : 'text-gray-300'}`}
+                style={{height: '1.5em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
+                title={`[${log.timestamp.toLocaleTimeString()}] ${log.serverName} - ${log.message}`}
+              >
+                <span className="text-gray-500">
+                  [{log.timestamp.toLocaleTimeString()}]
+                </span>
+                {' '}
+                <span className="text-blue-400">{log.serverName}</span>
+                {' - '}
+                {log.message}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

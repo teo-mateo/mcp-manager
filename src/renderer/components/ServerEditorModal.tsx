@@ -38,7 +38,7 @@ const ServerEditorModal: React.FC<ServerEditorModalProps> = ({
   scope,
 }) => {
   const isEditMode = !!server;
-  const [editorMode, setEditorMode] = useState<EditorMode>(isEditMode ? 'form' : 'json');
+  const [editorMode, setEditorMode] = useState<EditorMode>('json');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // JSON mode state
@@ -272,7 +272,7 @@ const ServerEditorModal: React.FC<ServerEditorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
@@ -454,27 +454,18 @@ const ServerEditorModal: React.FC<ServerEditorModalProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex justify-between">
-            <div>
-              {isEditMode && onDelete && (
-                <Button variant="danger" onClick={handleDelete} className="px-4 py-2">
-                  Delete Server
-                </Button>
-              )}
-            </div>
-            <div className="flex space-x-3">
-              <Button variant="secondary" onClick={onClose} className="px-4 py-2" disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={editorMode === 'json' ? handleSaveJSON : handleSaveForm}
-                disabled={isSubmitting}
-                className="px-4 py-2"
-              >
-                {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Add Server'}
-              </Button>
-            </div>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={onClose} className="px-4 py-2" disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={editorMode === 'json' ? handleSaveJSON : handleSaveForm}
+              disabled={isSubmitting}
+              className="px-4 py-2"
+            >
+              {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Add Server'}
+            </Button>
           </div>
         </div>
       </div>
